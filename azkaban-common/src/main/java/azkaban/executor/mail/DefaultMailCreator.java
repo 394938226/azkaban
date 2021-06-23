@@ -74,52 +74,33 @@ public class DefaultMailCreator implements MailCreator {
 
     if (emailList != null && !emailList.isEmpty()) {
       message.addAllToAddress(emailList);
-      message.setMimeType("text/html");
-      message.setSubject("Flow '" + flow.getFlowId() + "' has encountered a failure on "
-          + azkabanName);
-
-      message.println("<h2 style=\"color:#FF0000\"> Execution '"
-          + flow.getExecutionId() + "' of flow '" + flow.getFlowId() + "' of project '"
-          + flow.getProjectName() + "' has encountered a failure on " + azkabanName + "</h2>");
+      message.setMimeType("text/html;charset=utf-8");
+      message.setSubject("工作流 '" + flow.getFlowId() + "' 执行失败！ ");
+      message.println("<h2 style=\"color:#FF0000\"> 项目'" + flow.getProjectName()+ "'的工作流'"+flow.getFlowId()+"' 任务'"+execId+"'执行失败！" +"</h2>");
 
       if (option.getFailureAction() == FailureAction.CANCEL_ALL) {
         message
-            .println("This flow is set to cancel all currently running jobs.");
+            .println("工作流被设置为取消所有正在运行的作业");
       } else if (option.getFailureAction() == FailureAction.FINISH_ALL_POSSIBLE) {
         message
-            .println("This flow is set to complete all jobs that aren't blocked by the failure.");
+            .println("工作流被设置为完成所有作业并且忽略失败的作业");
       } else {
         message
-            .println("This flow is set to complete all currently running jobs before stopping.");
+            .println("工作流被设置为停止前，正确完成当前的所有作业");
       }
 
       message.println("<table>");
-      message.println("<tr><td>Start Time</td><td>"
+      message.println("<tr><td>开始时间：</td><td>"
           + TimeUtils.formatDateTimeZone(flow.getStartTime()) + "</td></tr>");
-      message.println("<tr><td>End Time</td><td>"
+      message.println("<tr><td>结束时间：</td><td>"
           + TimeUtils.formatDateTimeZone(flow.getEndTime()) + "</td></tr>");
-      message.println("<tr><td>Duration</td><td>"
+      message.println("<tr><td>执行耗时：</td><td>"
           + TimeUtils.formatDuration(flow.getStartTime(), flow.getEndTime())
           + "</td></tr>");
-      message.println("<tr><td>Status</td><td>" + flow.getStatus() + "</td></tr>");
+      message.println("<tr><td>状态：</td><td>" + flow.getStatus() + "</td></tr>");
       message.println("</table>");
       message.println("");
-      final String executionUrl =
-          scheme + "://" + clientHostname + ":" + clientPortNumber + "/"
-              + "executor?" + "execid=" + execId;
-      message.println("<a href=\"" + executionUrl + "\">" + flow.getFlowId()
-          + " Execution Link</a>");
 
-      message.println("");
-      message.println("<h3>Reason</h3>");
-      final List<String> failedJobs = findFailedJobs(flow);
-      message.println("<ul>");
-      for (final String jobId : failedJobs) {
-        message.println("<li><a href=\"" + executionUrl + "&job=" + jobId
-            + "\">Failed job '" + jobId + "' Link</a></li>");
-      }
-
-      message.println("</ul>");
       return true;
     }
 
@@ -138,67 +119,22 @@ public class DefaultMailCreator implements MailCreator {
 
     if (emailList != null && !emailList.isEmpty()) {
       message.addAllToAddress(emailList);
-      message.setMimeType("text/html");
-      message.setSubject("Flow '" + flow.getFlowId() + "' has failed on "
-          + azkabanName);
-
-      message.println("<h2 style=\"color:#FF0000\"> Execution '" + execId
-          + "' of flow '" + flow.getFlowId() + "' of project '"
-          + flow.getProjectName() + "' has failed on " + azkabanName + "</h2>");
+      message.setMimeType("text/html;charset=utf-8");
+      message.setSubject("工作流 '" + flow.getFlowId() + "' 执行失败！ ");
+      message.println("<h2 style=\"color:#FF0000\"> 项目'" + flow.getProjectName()+ "'的工作流'"+flow.getFlowId()+"' 任务'"+execId+"'执行失败！" +"</h2>");
+		  
       message.println("<table>");
-      message.println("<tr><td>Start Time</td><td>"
+      message.println("<tr><td>开始时间：</td><td>"
           + TimeUtils.formatDateTimeZone(flow.getStartTime()) + "</td></tr>");
-      message.println("<tr><td>End Time</td><td>"
+      message.println("<tr><td>结束时间：</td><td>"
           + TimeUtils.formatDateTimeZone(flow.getEndTime()) + "</td></tr>");
-      message.println("<tr><td>Duration</td><td>"
+      message.println("<tr><td>执行耗时：</td><td>"
           + TimeUtils.formatDuration(flow.getStartTime(), flow.getEndTime())
           + "</td></tr>");
-      message.println("<tr><td>Status</td><td>" + flow.getStatus() + "</td></tr>");
+      message.println("<tr><td>状态：</td><td>" + flow.getStatus() + "</td></tr>");
       message.println("</table>");
       message.println("");
-      final String executionUrl =
-          scheme + "://" + clientHostname + ":" + clientPortNumber + "/"
-              + "executor?" + "execid=" + execId;
-      message.println("<a href=\"" + executionUrl + "\">" + flow.getFlowId()
-          + " Execution Link</a>");
-
-      message.println("");
-      message.println("<h3>Reason</h3>");
-      final List<String> failedJobs = findFailedJobs(flow);
-      message.println("<ul>");
-      for (final String jobId : failedJobs) {
-        message.println("<li><a href=\"" + executionUrl + "&job=" + jobId
-            + "\">Failed job '" + jobId + "' Link</a></li>");
-      }
-      for (final String reason : reasons) {
-        message.println("<li>" + reason + "</li>");
-      }
-
-      message.println("</ul>");
-
-      message.println("");
-
-      int failedCount = 0;
-      for (final ExecutableFlow executableFlow : pastExecutions) {
-        if (executableFlow.getStatus().equals(Status.FAILED)) {
-          failedCount++;
-        }
-      }
-
-      message.println(String.format("<h3>Executions from past 72 hours (%s out %s) failed</h3>",
-          failedCount, pastExecutions.size()));
-      for (final ExecutableFlow executableFlow : pastExecutions) {
-        message.println("<table>");
-        message.println(
-            "<tr><td>Execution Id</td><td>" + (executableFlow.getExecutionId()) + "</td></tr>");
-        message.println("<tr><td>Start Time</td><td>"
-            + TimeUtils.formatDateTimeZone(executableFlow.getStartTime()) + "</td></tr>");
-        message.println("<tr><td>End Time</td><td>"
-            + TimeUtils.formatDateTimeZone(executableFlow.getEndTime()) + "</td></tr>");
-        message.println("<tr><td>Status</td><td>" + executableFlow.getStatus() + "</td></tr>");
-        message.println("</table>");
-      }
-
+      
       return true;
     }
     return false;
@@ -216,29 +152,21 @@ public class DefaultMailCreator implements MailCreator {
 
     if (emailList != null && !emailList.isEmpty()) {
       message.addAllToAddress(emailList);
-      message.setMimeType("text/html");
-      message.setSubject("Flow '" + flow.getFlowId() + "' has succeeded on "
-          + azkabanName);
-
-      message.println("<h2> Execution '" + flow.getExecutionId()
-          + "' of flow '" + flow.getFlowId() + "' of project '"
-          + flow.getProjectName() + "' has succeeded on " + azkabanName + "</h2>");
+      message.setMimeType("text/html;charset=utf-8");
+      message.setSubject("工作流 '" + flow.getFlowId() + "' 执行成功！ ");
+      message.println("<h2 > 项目'" + flow.getProjectName()+ "'的工作流'"+flow.getFlowId()+"' 任务'"+execId+"'执行成功！" +"</h2>");
       message.println("<table>");
-      message.println("<tr><td>Start Time</td><td>"
+      message.println("<tr><td>开始时间：</td><td>"
           + TimeUtils.formatDateTimeZone(flow.getStartTime()) + "</td></tr>");
-      message.println("<tr><td>End Time</td><td>"
+      message.println("<tr><td>结束时间：</td><td>"
           + TimeUtils.formatDateTimeZone(flow.getEndTime()) + "</td></tr>");
-      message.println("<tr><td>Duration</td><td>"
+      message.println("<tr><td>执行耗时：</td><td>"
           + TimeUtils.formatDuration(flow.getStartTime(), flow.getEndTime())
           + "</td></tr>");
-      message.println("<tr><td>Status</td><td>" + flow.getStatus() + "</td></tr>");
+      message.println("<tr><td>状态：</td><td>" + flow.getStatus() + "</td></tr>");
       message.println("</table>");
       message.println("");
-      final String executionUrl =
-          scheme + "://" + clientHostname + ":" + clientPortNumber + "/"
-              + "executor?" + "execid=" + execId;
-      message.println("<a href=\"" + executionUrl + "\">" + flow.getFlowId()
-          + " Execution Link</a>");
+ 
       return true;
     }
     return false;
@@ -255,33 +183,32 @@ public class DefaultMailCreator implements MailCreator {
 
     if (emailList != null && !emailList.isEmpty()) {
       message.addAllToAddress(emailList);
-      message.setMimeType("text/html");
-      message.setSubject(
-          "Flow status could not be updated from " + executor.getHost() + " on " + azkabanName);
+      message.setMimeType("text/html;charset=utf-8");
+      message.setSubject("主机：" +executor.getHost() + "工作流状态更新失败！");
 
       message.println(
-          "<h2 style=\"color:#FF0000\"> Flow status could not be updated from " + executor.getHost()
-              + " on " + azkabanName + "</h2>");
+          "<h2 style=\"color:#FF0000\"> 工作流状态在主机： " + executor.getHost()
+              + " 更新失败！" + "</h2>");
 
-      message.println("The actual status of these executions is unknown, "
-          + "because getting status update from azkaban executor is failing");
+      message.println("这个节点上的所有被执行的作业，至少有一个作业状态更新失败！");
 
       message.println("");
-      message.println("<h3>Error detail</h3>");
+      message.println("<h3>错误详情：</h3>");
       message.println("<pre>" + ExceptionUtils.getStackTrace(updateException) + "</pre>");
 
       message.println("");
-      message.println("<h3>Affected executions</h3>");
+      message.println("<h3>被影响的作业：</h3>");
       message.println("<ul>");
       for (final ExecutableFlow flow : flows) {
         final int execId = flow.getExecutionId();
-        final String executionUrl =
-            scheme + "://" + clientHostname + ":" + clientPortNumber + "/"
-                + "executor?" + "execid=" + execId;
+ 
 
-        message.println("<li>Execution '" + flow.getExecutionId() + "' of flow '" + flow.getFlowId()
-            + "' of project '" + flow.getProjectName() + "' - " +
-            " <a href=\"" + executionUrl + "\">Execution Link</a></li>");
+//        message.println("<li>Execution '" + flow.getExecutionId() + "' of flow '" + flow.getFlowId()
+//            + "' of project '" + flow.getProjectName() +
+//            "</li>");
+		
+		message.println("<li>项目'" + flow.getProjectName() + "'的工作流 '" + flow.getFlowId()
+            + "'任务'"  + flow.getExecutionId()+ "'</li>");
       }
 
       message.println("</ul>");
@@ -291,3 +218,4 @@ public class DefaultMailCreator implements MailCreator {
     return false;
   }
 }
+
